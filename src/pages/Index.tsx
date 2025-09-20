@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PatientDashboard } from "@/components/PatientDashboard";
-import { WorkflowOrchestrator } from "@/components/WorkflowOrchestrator";
+import { PatientsList } from "@/components/PatientsList";
+import { MedicalRecordsList } from "@/components/MedicalRecordsList";
+import { WorkflowsDashboard } from "@/components/WorkflowsDashboard";
 import { AlertNotifications } from "@/components/AlertNotifications";
-import { mockPatients, mockWorkflowEvents, mockAlerts } from "@/data/mockData";
+import { mockAlerts } from "@/data/mockData";
 import { Activity, Brain, Users, AlertTriangle, TrendingUp, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { usePatients } from "@/hooks/usePatients";
 
 const Index = () => {
   const [alerts, setAlerts] = useState(mockAlerts);
   const { toast } = useToast();
+  const { patients, loading: patientsLoading } = usePatients();
 
   const handleAcknowledgeAlert = (alertId: string) => {
     setAlerts(prev => prev.map(alert => 
@@ -30,9 +33,7 @@ const Index = () => {
     });
   };
 
-  const criticalPatients = mockPatients.filter(p => p.status === 'critical').length;
-  const warningPatients = mockPatients.filter(p => p.status === 'warning').length;
-  const stablePatients = mockPatients.filter(p => p.status === 'stable').length;
+  const totalPatients = patients.length;
   const activeAlerts = alerts.filter(a => !a.acknowledged).length;
 
   return (
@@ -60,39 +61,15 @@ const Index = () => {
 
       <div className="container mx-auto px-6 py-8">
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <Card className="border-0 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-medical)] transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Critical Patients</p>
-                  <p className="text-2xl font-bold text-destructive">{criticalPatients}</p>
+                  <p className="text-sm text-muted-foreground">Total Patients</p>
+                  <p className="text-2xl font-bold text-primary">{patientsLoading ? '...' : totalPatients}</p>
                 </div>
-                <AlertTriangle className="h-8 w-8 text-destructive" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-medical)] transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Need Follow-up</p>
-                  <p className="text-2xl font-bold text-warning">{warningPatients}</p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-warning" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-medical)] transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Stable Patients</p>
-                  <p className="text-2xl font-bold text-success">{stablePatients}</p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-success" />
+                <Users className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -102,31 +79,40 @@ const Index = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Active Alerts</p>
-                  <p className="text-2xl font-bold text-primary">{activeAlerts}</p>
+                  <p className="text-2xl font-bold text-warning">{activeAlerts}</p>
                 </div>
-                <Users className="h-8 w-8 text-primary" />
+                <AlertTriangle className="h-8 w-8 text-warning" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-medical)] transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">System Status</p>
+                  <p className="text-2xl font-bold text-success">Active</p>
+                </div>
+                <CheckCircle className="h-8 w-8 text-success" />
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Main Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Patients & Alerts */}
-          <div className="lg:col-span-2 space-y-8">
-            <PatientDashboard patients={mockPatients} />
-            
-            <AlertNotifications 
-              alerts={alerts}
-              onAcknowledge={handleAcknowledgeAlert}
-              onDismiss={handleDismissAlert}
-            />
+        <div className="space-y-8">
+          <AlertNotifications 
+            alerts={alerts}
+            onAcknowledge={handleAcknowledgeAlert}
+            onDismiss={handleDismissAlert}
+          />
+          
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <PatientsList />
+            <MedicalRecordsList />
           </div>
-
-          {/* Right Column - Workflow Orchestrator */}
-          <div className="lg:col-span-1">
-            <WorkflowOrchestrator events={mockWorkflowEvents} />
-          </div>
+          
+          <WorkflowsDashboard />
         </div>
 
         {/* JSON Output Example */}
